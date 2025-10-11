@@ -6,7 +6,18 @@ import '../Page.css';
 
 function Printing() {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    // Get current date in Indian timezone more reliably
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const indianTime = new Date(utc + (5.5 * 3600000)); // IST is UTC+5:30
+    
+    const year = indianTime.getFullYear();
+    const month = String(indianTime.getMonth() + 1).padStart(2, '0');
+    const day = String(indianTime.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  });
   const [isCalculated, setIsCalculated] = useState(false);
   const [dateInfo, setDateInfo] = useState({});
   const [uploadedPrintingImage, setUploadedPrintingImage] = useState(null);
@@ -25,6 +36,24 @@ function Printing() {
       }
     };
   }, [uploadedPrintingImage]);
+
+  // Ensure date is always current on component mount
+  useEffect(() => {
+    const getCurrentIndianDate = () => {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const indianTime = new Date(utc + (5.5 * 3600000)); // IST is UTC+5:30
+      
+      const year = indianTime.getFullYear();
+      const month = String(indianTime.getMonth() + 1).padStart(2, '0');
+      const day = String(indianTime.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    };
+    
+    const currentDate = getCurrentIndianDate();
+    setSelectedDate(currentDate);
+  }, []);
 
   // Validate date input
   const handleDateChange = (e) => {
@@ -105,8 +134,8 @@ function Printing() {
       const useByDate = new Date(selectedDateObj);
       useByDate.setDate(useByDate.getDate() + 9);
       
-      // Batch code = 1(SELECTEDDATE in DDMMYY)25
-      const batchCode = `1${formatDate(selectedDateObj, 'DDMMYY')}25`;
+      // Batch code = 1(SELECTEDDATE in DDMMYY)26
+      const batchCode = `1${formatDate(selectedDateObj, 'DDMMYY')}26`;
       
       // Validate that all dates were calculated correctly
       if (formatDate(pkdDate) === 'Invalid Date' || 
