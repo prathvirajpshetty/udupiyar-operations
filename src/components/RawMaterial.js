@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Page.css';
+import '../Page.css';
 
 function RawMaterial() {
   const navigate = useNavigate();

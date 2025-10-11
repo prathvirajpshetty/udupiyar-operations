@@ -1,23 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Page.css';
+import { storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import '../Page.css';
 
 function Printing() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isCalculated, setIsCalculated] = useState(false);
   const [dateInfo, setDateInfo] = useState({});
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState('');
+  const [uploadedProof, setUploadedProof] = useState(null);
+  const [proofFileName, setProofFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showUploadActions, setShowUploadActions] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Cleanup function
   useEffect(() => {
     return () => {
       // Cleanup any ongoing processes when component unmounts
-      setIsValidating(false);
+      if (uploadedProof) {
+        URL.revokeObjectURL(uploadedProof);
+      }
     };
-  }, []);
+  }, [uploadedProof]);
 
   // Validate date input
   const handleDateChange = (e) => {
@@ -31,7 +38,7 @@ function Printing() {
         
         // Clear previous calculations when date changes
         if (isCalculated) {
-          setValidationResult('Date changed. Please recalculate.');
+          // Date changed, user should recalculate
         }
       }
     } else {
@@ -125,7 +132,7 @@ function Printing() {
       });
       
       setIsCalculated(true);
-      setValidationResult(''); // Clear previous validation results
+      // Dates calculated successfully
       
     } catch (error) {
       console.error('Error in calculateDates:', error);
@@ -133,95 +140,121 @@ function Printing() {
     }
   };
 
-  const handleValidate = () => {
-    // Check if dates are calculated
-    if (!dateInfo.expectedText) {
-      alert('Please calculate dates first before validating');
-      return;
-    }
-    
+  const handleUploadProof = () => {
     // Reset file input to allow same file to be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
     
-    // Trigger file input click to access camera
+    // Trigger file input click to upload proof
     fileInputRef.current.click();
   };
 
-  const handleImageCapture = async (event) => {
+    const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) {
-      setValidationResult('No file selected');
       return;
     }
 
-    // Validate file type
+    // Validate file type (images only)
     if (!file.type.startsWith('image/')) {
-      setValidationResult('❌ Please select a valid image file');
+      alert('Please select a valid image file');
       return;
     }
 
     // Validate file size (limit to 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      setValidationResult('❌ Image file is too large. Please select a smaller image.');
+      alert('Image file is too large. Please select a file smaller than 10MB.');
       return;
     }
 
-    setIsValidating(true);
-    setValidationResult('Processing image...');
+    // Clean up previous proof if exists
+    if (uploadedProof) {
+      URL.revokeObjectURL(uploadedProof);
+    }
 
+    // Store the file and show preview with submit/cancel buttons
+    setSelectedFile(file);
+    setUploadedProof(URL.createObjectURL(file));
+    setProofFileName(file.name);
+    setShowUploadActions(true);
+  };
+
+  const handleSubmitUpload = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
     try {
-      // Create a promise-based timeout for the OCR simulation
-      const ocrPromise = new Promise((resolve) => {
-        setTimeout(() => {
-          // Mock OCR result - in reality this would come from actual OCR
-          const mockOcrText = `${dateInfo.line1}\n${dateInfo.line2}\n${dateInfo.line3}\nBatch: ${dateInfo.batchCode}`;
-          
-          // Compare with expected text (case-insensitive and trimmed)
-          const expectedText = dateInfo.expectedText.trim().toLowerCase();
-          const ocrText = mockOcrText.trim().toLowerCase();
-          
-          const isMatch = ocrText === expectedText;
-          
-          resolve({
-            success: true,
-            isMatch,
-            ocrText: mockOcrText
-          });
-        }, 2000);
-      });
-
-      // Add timeout for OCR processing
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('OCR processing timeout')), 30000); // 30 second timeout
-      });
-
-      const result = await Promise.race([ocrPromise, timeoutPromise]);
-
-      if (result.success) {
-        setValidationResult(result.isMatch ? 
-          '✅ Validation Successful! Text matches.' : 
-          '❌ Validation Failed! Text does not match.'
-        );
-      }
-
-    } catch (error) {
-      console.error('OCR Error:', error);
+      // Create filename with Indian date and time format
+      const now = new Date();
       
-      if (error.message === 'OCR processing timeout') {
-        setValidationResult('❌ Processing timeout. Please try again.');
+      // Convert to Indian timezone (IST)
+      const indianTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      
+      // Format date as DD-MM-YYYY
+      const day = String(indianTime.getDate()).padStart(2, '0');
+      const month = String(indianTime.getMonth() + 1).padStart(2, '0');
+      const year = indianTime.getFullYear();
+      const hours = String(indianTime.getHours()).padStart(2, '0');
+      const minutes = String(indianTime.getMinutes()).padStart(2, '0');
+      const seconds = String(indianTime.getSeconds()).padStart(2, '0');
+      
+      // Create folder name (YYYY-MM format for better organization)
+      const folderName = `${year}-${month}`;
+      
+      // Create filename without "proof_" prefix: DD-MM-YYYY_HH-MM-SS.ext
+      const fileExtension = selectedFile.name.split('.').pop();
+      const fileName = `${day}-${month}-${year}_${hours}-${minutes}-${seconds}.${fileExtension}`;
+
+      // Create a storage reference with month-specific folder
+      const storageRef = ref(storage, `proofs/${folderName}/${fileName}`);
+
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      alert('Image uploaded successfully!');
+      console.log('File uploaded successfully. Download URL:', downloadURL);
+      console.log('File path:', `proofs/${folderName}/${fileName}`);
+      
+      // Reset upload state
+      setShowUploadActions(false);
+      setSelectedFile(null);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      
+      // Handle specific Firebase Storage errors
+      if (error.code === 'storage/unauthorized') {
+        alert('Upload failed: Permission denied. Please check Firebase Storage rules.');
+      } else if (error.code === 'storage/canceled') {
+        alert('Upload was canceled.');
+      } else if (error.code === 'storage/unknown') {
+        alert('Upload failed: Unknown error occurred.');
       } else {
-        setValidationResult('❌ Error processing image. Please try again.');
+        alert(`Upload failed: ${error.message}`);
       }
     } finally {
-      setIsValidating(false);
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    // Clean up and reset
+    if (uploadedProof) {
+      URL.revokeObjectURL(uploadedProof);
+    }
+    setUploadedProof(null);
+    setProofFileName('');
+    setSelectedFile(null);
+    setShowUploadActions(false);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -276,29 +309,88 @@ function Printing() {
             </div>
           </div>
 
-          <div className="validation-section">
-            <button 
-              className="validate-button" 
-              onClick={handleValidate}
-              disabled={isValidating}
-            >
-              {isValidating ? 'Processing...' : 'Validate with Camera'}
-            </button>
+          <div className="upload-proof-section">
+            {!showUploadActions ? (
+              <button 
+                className="upload-button" 
+                onClick={handleUploadProof}
+              >
+                Upload Proof
+              </button>
+            ) : (
+              <div className="upload-actions">
+                <div className="upload-result">
+                  <p style={{
+                    color: '#2d5a27',
+                    backgroundColor: '#e8f5e8',
+                    padding: '10px',
+                    borderRadius: '5px',
+                    border: '1px solid #4caf50',
+                    margin: '10px 0',
+                    fontWeight: 'bold'
+                  }}>📎 Selected: {proofFileName}</p>
+                  {uploadedProof && (
+                    <div className="proof-preview">
+                      <img 
+                        src={uploadedProof} 
+                        alt="Proof preview" 
+                        style={{ 
+                          maxWidth: '200px', 
+                          maxHeight: '200px', 
+                          objectFit: 'contain',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          marginBottom: '15px'
+                        }} 
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="action-buttons" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    <button 
+                      className="submit-button" 
+                      onClick={handleSubmitUpload}
+                      disabled={isUploading}
+                      style={{
+                        backgroundColor: '#4caf50',
+                        color: 'white',
+                        padding: '10px 20px',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {isUploading ? 'Uploading...' : 'Submit'}
+                    </button>
+                    <button 
+                      className="cancel-button" 
+                      onClick={handleCancelUpload}
+                      disabled={isUploading}
+                      style={{
+                        backgroundColor: '#f44336',
+                        color: 'white',
+                        padding: '10px 20px',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <input
               type="file"
               ref={fileInputRef}
-              onChange={handleImageCapture}
+              onChange={handleFileUpload}
               accept="image/*"
-              capture="environment"
               style={{ display: 'none' }}
             />
-            
-            {validationResult && (
-              <div className="validation-result">
-                {validationResult}
-              </div>
-            )}
           </div>
 
           <div className="input-section">
