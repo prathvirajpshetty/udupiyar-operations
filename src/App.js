@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import RawMaterial from './RawMaterial';
-import Printing from './Printing';
+import RawMaterial from './components/RawMaterial';
+import Printing from './components/Printing';
 import './App.css';
 
 function HomePage() {
