@@ -9,8 +9,8 @@ function Printing() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isCalculated, setIsCalculated] = useState(false);
   const [dateInfo, setDateInfo] = useState({});
-  const [uploadedProof, setUploadedProof] = useState(null);
-  const [proofFileName, setProofFileName] = useState('');
+  const [uploadedPrintingImage, setUploadedPrintingImage] = useState(null);
+  const [printingImageFileName, setPrintingImageFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [showUploadActions, setShowUploadActions] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -20,11 +20,11 @@ function Printing() {
   useEffect(() => {
     return () => {
       // Cleanup any ongoing processes when component unmounts
-      if (uploadedProof) {
-        URL.revokeObjectURL(uploadedProof);
+      if (uploadedPrintingImage) {
+        URL.revokeObjectURL(uploadedPrintingImage);
       }
     };
-  }, [uploadedProof]);
+  }, [uploadedPrintingImage]);
 
   // Validate date input
   const handleDateChange = (e) => {
@@ -146,7 +146,7 @@ function Printing() {
       fileInputRef.current.value = '';
     }
     
-    // Trigger file input click to upload proof
+    // Trigger file input click to upload printing image
     fileInputRef.current.click();
   };
 
@@ -169,15 +169,15 @@ function Printing() {
       return;
     }
 
-    // Clean up previous proof if exists
-    if (uploadedProof) {
-      URL.revokeObjectURL(uploadedProof);
+    // Clean up previous printing image if exists
+    if (uploadedPrintingImage) {
+      URL.revokeObjectURL(uploadedPrintingImage);
     }
 
     // Store the file and show preview with submit/cancel buttons
     setSelectedFile(file);
-    setUploadedProof(URL.createObjectURL(file));
-    setProofFileName(file.name);
+    setUploadedPrintingImage(URL.createObjectURL(file));
+    setPrintingImageFileName(file.name);
     setShowUploadActions(true);
   };
 
@@ -208,7 +208,7 @@ function Printing() {
       const fileName = `${day}-${month}-${year}_${hours}-${minutes}-${seconds}.${fileExtension}`;
 
       // Create a storage reference with month-specific folder
-      const storageRef = ref(storage, `proofs/${folderName}/${fileName}`);
+      const storageRef = ref(storage, `printing-images/${folderName}/${fileName}`);
 
       // Upload the file
       const snapshot = await uploadBytes(storageRef, selectedFile);
@@ -216,9 +216,9 @@ function Printing() {
       // Get the download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      alert('Image uploaded successfully!');
+      alert('Printing image uploaded successfully!');
       console.log('File uploaded successfully. Download URL:', downloadURL);
-      console.log('File path:', `proofs/${folderName}/${fileName}`);
+      console.log('File path:', `printing-images/${folderName}/${fileName}`);
       
       // Reset upload state
       setShowUploadActions(false);
@@ -244,11 +244,11 @@ function Printing() {
 
   const handleCancelUpload = () => {
     // Clean up and reset
-    if (uploadedProof) {
-      URL.revokeObjectURL(uploadedProof);
+    if (uploadedPrintingImage) {
+      URL.revokeObjectURL(uploadedPrintingImage);
     }
-    setUploadedProof(null);
-    setProofFileName('');
+    setUploadedPrintingImage(null);
+    setPrintingImageFileName('');
     setSelectedFile(null);
     setShowUploadActions(false);
     
@@ -309,13 +309,14 @@ function Printing() {
             </div>
           </div>
 
-          <div className="upload-proof-section">
+          <div className="upload-printing-image-section">
             {!showUploadActions ? (
               <button 
                 className="upload-button" 
                 onClick={handleUploadProof}
+                style={{ padding: '20px', margin: '20px' }}
               >
-                Upload Proof
+                Upload Printing Image
               </button>
             ) : (
               <div className="upload-actions">
@@ -328,12 +329,12 @@ function Printing() {
                     border: '1px solid #4caf50',
                     margin: '10px 0',
                     fontWeight: 'bold'
-                  }}>📎 Selected: {proofFileName}</p>
-                  {uploadedProof && (
-                    <div className="proof-preview">
+                  }}>📎 Selected: {printingImageFileName}</p>
+                  {uploadedPrintingImage && (
+                    <div className="printing-image-preview">
                       <img 
-                        src={uploadedProof} 
-                        alt="Proof preview" 
+                        src={uploadedPrintingImage} 
+                        alt="Printing image preview" 
                         style={{ 
                           maxWidth: '200px', 
                           maxHeight: '200px', 
