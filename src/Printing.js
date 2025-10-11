@@ -250,11 +250,11 @@ function Printing() {
             />
           </div>
           <div className="button-group">
-            <button className="back-button" onClick={goBack}>
-              Back
-            </button>
             <button className="calculate-button" onClick={calculateDates}>
               Calculate
+            </button>
+            <button className="back-button" onClick={goBack}>
+              Back
             </button>
           </div>
         </div>
