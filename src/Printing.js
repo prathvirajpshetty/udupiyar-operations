@@ -249,9 +249,14 @@ function Printing() {
               max="2040-12-31"
             />
           </div>
-          <button className="calculate-button" onClick={calculateDates}>
-            Calculate
-          </button>
+          <div className="button-group">
+            <button className="back-button" onClick={goBack}>
+              Back
+            </button>
+            <button className="calculate-button" onClick={calculateDates}>
+              Calculate
+            </button>
+          </div>
         </div>
       ) : (
         <div className="results-section">
