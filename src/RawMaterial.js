@@ -25,13 +25,17 @@ function RawMaterial() {
     // SALT calculation: (ADD all the value * 1.5) * 0.0085
     const totalBeforeSalt = dosaRice + idlyRice + uradDal + fenugreek;
     const salt = (totalBeforeSalt * 1.5) * 0.0085;
+    
+    // Calculate total weight
+    const totalWeight = (dosaRice + idlyRice + uradDal + fenugreek + salt) * 2;
 
     setResults({
       dosaRice: dosaRice.toFixed(3),
       idlyRice: idlyRice.toFixed(3),
       uradDal: uradDal.toFixed(3),
       fenugreek: fenugreek.toFixed(3),
-      salt: salt.toFixed(3)
+      salt: salt.toFixed(3),
+      totalWeight: totalWeight.toFixed(3)
     });
 
     setIsCalculated(true);
@@ -60,9 +64,14 @@ function RawMaterial() {
               className="weight-input"
             />
           </div>
-          <button className="calculate-button" onClick={calculateWeights}>
-            Calculate
-          </button>
+          <div className="button-group">
+            <button className="calculate-button" onClick={calculateWeights}>
+              Calculate
+            </button>
+            <button className="back-button" onClick={goBack}>
+              Back
+            </button>
+          </div>
         </div>
       ) : (
         <div className="results-section">
@@ -86,6 +95,10 @@ function RawMaterial() {
             <div className="result-item">
               <span className="item-name">SALT</span>
               <span className="item-weight">{results.salt} kg</span>
+            </div>
+            <div className="result-item">
+              <span className="item-name">TOTAL WEIGHT</span>
+              <span className="item-weight">{results.totalWeight} kg</span>
             </div>
           </div>
           
