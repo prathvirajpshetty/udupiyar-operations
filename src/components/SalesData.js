@@ -12,7 +12,16 @@ function SalesData() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0], // Simple local date for form input
+    date: (() => {
+      // Get current date in Indian timezone
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const indianTime = new Date(utc + (5.5 * 3600000));
+      const year = indianTime.getFullYear();
+      const month = String(indianTime.getMonth() + 1).padStart(2, '0');
+      const day = String(indianTime.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })(),
     sold: '',
     exchange: '',
     return: ''
