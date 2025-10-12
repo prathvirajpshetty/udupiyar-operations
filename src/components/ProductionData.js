@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import DataStorage from '../utils/DataStorage';
 import UserHeader from './UserHeader';
 import '../Page.css';
+import { Timestamp } from "firebase/firestore";
+
 
 function ProductionData() {
   const navigate = useNavigate();
@@ -11,16 +13,7 @@ function ProductionData() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
-    date: (() => {
-      // Get current date in Indian timezone
-      const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const indianTime = new Date(utc + (5.5 * 3600000));
-      const year = indianTime.getFullYear();
-      const month = String(indianTime.getMonth() + 1).padStart(2, '0');
-      const day = String(indianTime.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    })(),
+    date: new Date().toISOString().split('T')[0], // Simple local date for form input
     pouches: ''
   });
 
@@ -42,7 +35,7 @@ function ProductionData() {
         ...formData,
         pouches: parseInt(formData.pouches) || 0,
         user: currentUser?.username,
-        timestamp: new Date().toISOString()
+        timestamp: Timestamp.fromDate(new Date()) // stores current local time
       };
 
       // Use hybrid storage (Firestore with localStorage fallback)
