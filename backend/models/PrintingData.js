@@ -18,12 +18,12 @@ module.exports = (sequelize, DataTypes) => {
     imageUrl: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'Firebase storage URL of uploaded printing image'
+      comment: 'S3 URL of uploaded printing image'
     },
-    imagePath: {
+    imageName: {
       type: DataTypes.STRING(500),
       allowNull: true,
-      comment: 'Firebase storage path of uploaded image'
+      comment: 'S3 key/filename of uploaded image'
     },
     ocrText: {
       type: DataTypes.TEXT,

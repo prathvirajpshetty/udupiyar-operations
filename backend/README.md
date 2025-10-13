@@ -135,8 +135,8 @@ A robust Node.js backend API for the Udupiyar Operations Management System, buil
 - `id` (UUID, Primary Key)
 - `selectedDate` (Date) - Selected date for calculations
 - `calculatedDates` (JSONB) - Calculated dates information
-- `imageUrl` (Text) - Firebase storage URL
-- `imagePath` (String) - Firebase storage path
+- `imageUrl` (Text) - S3 storage URL
+- `imageName` (String) - S3 key/filename
 - `ocrText` (Text) - OCR extracted text
 - `user` (String) - Username who uploaded data
 - `timestamp` (DateTime) - Submission timestamp
@@ -180,7 +180,7 @@ The project includes `lambda.js` for serverless deployment:
 
 ## 📱 Integration with Frontend
 
-The backend is designed to work seamlessly with your React frontend. Update your frontend data storage utilities to use these API endpoints instead of Firebase for certain operations.
+The backend is designed to work seamlessly with your React frontend. The frontend data storage utilities use these API endpoints for all data operations.
 
 ## 🤝 Contributing
 

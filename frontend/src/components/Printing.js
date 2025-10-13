@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useAuth } from '../context/AuthContext';
+import { s3UploadService } from '../services/s3UploadService';
+import DataStorage from '../utils/DataStorage';
 import '../Page.css';
 
 function Printing() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [selectedDate, setSelectedDate] = useState(() => {
     // Get current date in Indian timezone more reliably
     const now = new Date();
@@ -215,57 +217,37 @@ function Printing() {
 
     setIsUploading(true);
     try {
-      // Create filename with Indian date and time format
-      const now = new Date();
-      
-      // Convert to Indian timezone (IST)
-      const indianTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
-      
-      // Format date as DD-MM-YYYY
-      const day = String(indianTime.getDate()).padStart(2, '0');
-      const month = String(indianTime.getMonth() + 1).padStart(2, '0');
-      const year = indianTime.getFullYear();
-      const hours = String(indianTime.getHours()).padStart(2, '0');
-      const minutes = String(indianTime.getMinutes()).padStart(2, '0');
-      const seconds = String(indianTime.getSeconds()).padStart(2, '0');
-      
-      // Create folder name (YYYY-MM format for better organization)
-      const folderName = `${year}-${month}`;
-      
-      // Create filename without "proof_" prefix: DD-MM-YYYY_HH-MM-SS.ext
-      const fileExtension = selectedFile.name.split('.').pop();
-      const fileName = `${day}-${month}-${year}_${hours}-${minutes}-${seconds}.${fileExtension}`;
+      // First save the printing data to backend
+      const printingData = {
+        selectedDate,
+        calculatedDates: dateInfo,
+        user: currentUser?.username || 'anonymous',
+        timestamp: new Date().toISOString()
+      };
 
-      // Create a storage reference with month-specific folder
-      const storageRef = ref(storage, `printing-images/${folderName}/${fileName}`);
+      // Save printing data first
+      const printingResult = await DataStorage.saveData('printing', printingData);
+      console.log('Printing data saved:', printingResult);
 
-      // Upload the file
-      const snapshot = await uploadBytes(storageRef, selectedFile);
-      
-      // Get the download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      // Upload image to S3 with reference to printing data
+      const uploadResult = await s3UploadService.uploadPrintingImage(selectedFile, {
+        printingDataId: printingResult.id,
+        description: `Printing image for ${selectedDate}`,
+        uploadedBy: currentUser?.username || 'anonymous'
+      });
 
-      alert('Printing image uploaded successfully!');
-      console.log('File uploaded successfully. Download URL:', downloadURL);
-      console.log('File path:', `printing-images/${folderName}/${fileName}`);
+      alert('Printing data and image uploaded successfully!');
+      console.log('Upload successful:', uploadResult);
       
       // Reset upload state
       setShowUploadActions(false);
       setSelectedFile(null);
+      setUploadedPrintingImage(null);
+      setPrintingImageFileName('');
       
     } catch (error) {
-      console.error('Error uploading file:', error);
-      
-      // Handle specific Firebase Storage errors
-      if (error.code === 'storage/unauthorized') {
-        alert('Upload failed: Permission denied. Please check Firebase Storage rules.');
-      } else if (error.code === 'storage/canceled') {
-        alert('Upload was canceled.');
-      } else if (error.code === 'storage/unknown') {
-        alert('Upload failed: Unknown error occurred.');
-      } else {
-        alert(`Upload failed: ${error.message}`);
-      }
+      console.error('Error uploading:', error);
+      alert(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
