@@ -1,28 +1,36 @@
-// Hybrid data storage utility - tries Firestore first, falls back to localStorage
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
-
+// Backend API data storage utility
 class DataStorage {
-  // Try to save to Firestore, fallback to localStorage
-  static async saveData(collectionName, data) {
+  static async saveData(endpoint, data) {
     try {
-      // Try Firestore first
-      const docRef = await addDoc(collection(db, collectionName), data);
-      
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.status}`);
+      }
+
+      const result = await response.json();
       return {
         success: true,
-        id: docRef.id,
-        method: 'firestore'
+        id: result.data.id,
+        data: result.data,
+        method: 'backend'
       };
     } catch (error) {
-      // Fallback to localStorage
+      // Fallback to localStorage for offline support
       try {
-        const storageKey = `${collectionName}_data`;
+        const storageKey = `${endpoint}_data`;
         const existingData = JSON.parse(localStorage.getItem(storageKey) || '[]');
         
         const newEntry = {
           ...data,
-          id: Date.now().toString(), // Simple ID generation
+          id: Date.now().toString(),
           savedAt: new Date().toISOString(),
           method: 'localStorage'
         };
@@ -36,7 +44,7 @@ class DataStorage {
           method: 'localStorage'
         };
       } catch (localError) {
-        throw new Error('Failed to save data to both Firestore and localStorage');
+        throw new Error('Failed to save data to both backend and localStorage');
       }
     }
   }

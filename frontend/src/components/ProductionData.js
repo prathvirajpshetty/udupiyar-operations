@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import DataStorage from '../utils/DataStorage';
 import UserHeader from './UserHeader';
 import '../Page.css';
-import { Timestamp } from "firebase/firestore";
 
 
 function ProductionData() {
@@ -56,13 +55,13 @@ function ProductionData() {
         ...formData,
         pouches: parseInt(formData.pouches) || 0,
         user: currentUser?.username,
-        timestamp: Timestamp.fromDate(new Date()) // stores current local time
+        timestamp: new Date().toISOString()
       };
 
-      // Use hybrid storage (Firestore with localStorage fallback)
+      // Save to backend API
       const result = await DataStorage.saveData('production', productionData);
       
-      const storageMethod = result.method === 'firestore' ? 'cloud database' : 'local storage';
+      const storageMethod = result.method === 'backend' ? 'database' : 'local storage';
       alert(`Production data submitted successfully to ${storageMethod}!`);
       
       navigate('/data-entry');
