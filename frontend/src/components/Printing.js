@@ -345,7 +345,7 @@ function Printing() {
                 onClick={handleUploadProof}
                 style={{ padding: '20px', margin: '20px' }}
               >
-                Upload Printing Image
+                UPLOAD PRINTING IMAGE
               </button>
             ) : (
               <div className="upload-actions">
