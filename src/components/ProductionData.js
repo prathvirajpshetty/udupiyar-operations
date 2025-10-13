@@ -23,6 +23,17 @@ function ProductionData() {
       const day = String(indianTime.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     })(),
+    productionFor: (() => {
+      // Get tomorrow's date in Indian timezone
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const indianTime = new Date(utc + (5.5 * 3600000));
+      const tomorrow = new Date(indianTime.getTime() + (24 * 60 * 60 * 1000)); // Add 24 hours
+      const year = tomorrow.getFullYear();
+      const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+      const day = String(tomorrow.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })(),
     pouches: ''
   });
 
@@ -80,13 +91,33 @@ function ProductionData() {
               marginBottom: '5px', 
               fontWeight: 'bold' 
             }}>
-              Date:
+              Production Date:
             </label>
             <input
               type="date"
               id="date"
               name="date"
               value={formData.date}
+              onChange={handleInputChange}
+              required
+              className="date-input"
+              style={{ width: '100%', padding: '10px' }}
+            />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '20px' }}>
+            <label htmlFor="productionFor" style={{ 
+              display: 'block', 
+              marginBottom: '5px', 
+              fontWeight: 'bold' 
+            }}>
+              Production For:
+            </label>
+            <input
+              type="date"
+              id="productionFor"
+              name="productionFor"
+              value={formData.productionFor}
               onChange={handleInputChange}
               required
               className="date-input"
