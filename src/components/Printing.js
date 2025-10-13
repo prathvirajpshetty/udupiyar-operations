@@ -419,6 +419,7 @@ function Printing() {
               ref={fileInputRef}
               onChange={handleFileUpload}
               accept="image/*"
+              capture="environment"
               style={{ display: 'none' }}
             />
           </div>
