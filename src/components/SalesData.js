@@ -26,7 +26,8 @@ function SalesData() {
     exchange: '',
     return: '',
     amount: '',
-    regularSale: true
+    regularSale: true,
+    comment: ''
   });
 
   const handleInputChange = (e) => {
@@ -189,7 +190,7 @@ function SalesData() {
             />
           </div>
 
-          <div className="input-group" style={{ marginBottom: '30px' }}>
+          <div className="input-group" style={{ marginBottom: '20px' }}>
             <label htmlFor="regularSale" style={{ 
               display: 'block', 
               marginBottom: '5px', 
@@ -208,6 +209,30 @@ function SalesData() {
               <option value={true}>Yes</option>
               <option value={false}>No</option>
             </select>
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '30px' }}>
+            <label htmlFor="comment" style={{ 
+              display: 'block', 
+              marginBottom: '5px', 
+              fontWeight: 'bold' 
+            }}>
+              Comment:
+            </label>
+            <textarea
+              id="comment"
+              name="comment"
+              value={formData.comment}
+              onChange={handleInputChange}
+              rows="3"
+              style={{ 
+                width: '100%', 
+                padding: '10px',
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
+              placeholder="Enter any comments (optional)"
+            />
           </div>
 
           <div className="button-group" style={{ 
