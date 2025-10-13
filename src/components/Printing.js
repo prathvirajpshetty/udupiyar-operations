@@ -132,7 +132,7 @@ function Printing() {
       
       // USE BY date = selected date + 9 days (total 10 days from selected)
       const useByDate = new Date(selectedDateObj);
-      useByDate.setDate(useByDate.getDate() + 9);
+      useByDate.setDate(useByDate.getDate() + 8);
       
       // Batch code = 1(SELECTEDDATE in DDMMYY)26
       const batchCode = `1${formatDate(selectedDateObj, 'DDMMYY')}26`;
