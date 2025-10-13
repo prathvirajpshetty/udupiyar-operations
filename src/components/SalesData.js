@@ -24,14 +24,16 @@ function SalesData() {
     })(),
     sold: '',
     exchange: '',
-    return: ''
+    return: '',
+    amount: '',
+    regularSale: true
   });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'select-one' && name === 'regularSale' ? value === 'true' : value
     }));
   };
 
@@ -46,6 +48,8 @@ function SalesData() {
         sold: parseFloat(formData.sold) || 0,
         exchange: parseFloat(formData.exchange) || 0,
         return: parseFloat(formData.return) || 0,
+        amount: parseFloat(formData.amount) || 0,
+        regularSale: formData.regularSale,
         user: currentUser?.username,
         timestamp: Timestamp.fromDate(new Date()) // stores current local time
       };
@@ -141,7 +145,7 @@ function SalesData() {
             />
           </div>
 
-          <div className="input-group" style={{ marginBottom: '30px' }}>
+          <div className="input-group" style={{ marginBottom: '20px' }}>
             <label htmlFor="return" style={{ 
               display: 'block', 
               marginBottom: '5px', 
@@ -161,6 +165,49 @@ function SalesData() {
               style={{ width: '100%', padding: '10px' }}
               placeholder="Enter return amount"
             />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '20px' }}>
+            <label htmlFor="amount" style={{ 
+              display: 'block', 
+              marginBottom: '5px', 
+              fontWeight: 'bold' 
+            }}>
+              Amount:
+            </label>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              value={formData.amount}
+              onChange={handleInputChange}
+              required
+              step="0.01"
+              min="0"
+              style={{ width: '100%', padding: '10px' }}
+              placeholder="Enter amount"
+            />
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '30px' }}>
+            <label htmlFor="regularSale" style={{ 
+              display: 'block', 
+              marginBottom: '5px', 
+              fontWeight: 'bold' 
+            }}>
+              Regular Sale:
+            </label>
+            <select
+              id="regularSale"
+              name="regularSale"
+              value={formData.regularSale}
+              onChange={handleInputChange}
+              required
+              style={{ width: '100%', padding: '10px' }}
+            >
+              <option value={true}>Yes</option>
+              <option value={false}>No</option>
+            </select>
           </div>
 
           <div className="button-group" style={{ 
