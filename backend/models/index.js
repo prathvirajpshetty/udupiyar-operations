@@ -27,18 +27,23 @@ const sequelize = new Sequelize(
 // Import models
 const ProductionData = require('./ProductionData')(sequelize, DataTypes);
 const SalesData = require('./SalesData')(sequelize, DataTypes);
-const PrintingData = require('./PrintingData')(sequelize, DataTypes);
-
-// Define associations here if needed
-// ProductionData.hasMany(SalesData);
-// SalesData.belongsTo(ProductionData);
+const BatchCodeData = require('./BatchCodeData')(sequelize, DataTypes);
+const User = require('./User')(sequelize, DataTypes);
 
 const db = {
   sequelize,
   Sequelize,
   ProductionData,
   SalesData,
-  PrintingData
+  BatchCodeData,
+  User
 };
+
+// Set up associations
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
 
 module.exports = db;

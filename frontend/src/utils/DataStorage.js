@@ -59,7 +59,7 @@ class DataStorage {
     }
   }
 
-  // Clear localStorage data (for testing)
+  // Clear localStorage data
   static clearLocalData(collectionName) {
     const storageKey = `${collectionName}_data`;
     localStorage.removeItem(storageKey);

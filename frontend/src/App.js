@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import RawMaterial from './components/RawMaterial';
-import Printing from './components/Printing';
+import BatchCodePrint from './components/BatchCodePrint';
 import DataEntry from './components/DataEntry';
 import SalesData from './components/SalesData';
 import ProductionData from './components/ProductionData';
@@ -30,9 +30,9 @@ function HomePage() {
         </button>
         <button 
           className="bottom-button" 
-          onClick={() => navigate('/printing')}
+          onClick={() => navigate('/batch-code-print')}
         >
-          PRINTING
+          BATCH CODE PRINT
         </button>
         {canAccessDataEntry && (
           <button 
@@ -56,7 +56,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/raw-material" element={<RawMaterial />} />
-            <Route path="/printing" element={<Printing />} />
+            <Route path="/batch-code-print" element={<BatchCodePrint />} />
             <Route path="/data-entry" element={<DataEntry />} />
             <Route path="/sales-data" element={<SalesData />} />
             <Route path="/production-data" element={<ProductionData />} />

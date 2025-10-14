@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const PrintingData = sequelize.define('PrintingData', {
+  const BatchCodeData = sequelize.define('BatchCodeData', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -18,12 +18,27 @@ module.exports = (sequelize, DataTypes) => {
     imageUrl: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'S3 URL of uploaded printing image'
+      comment: 'S3 URL of uploaded batch code image'
     },
     imageName: {
       type: DataTypes.STRING(500),
       allowNull: true,
       comment: 'S3 key/filename of uploaded image'
+    },
+    originalFileName: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      comment: 'Original filename of the uploaded image'
+    },
+    fileSize: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'File size in bytes'
+    },
+    mimeType: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'MIME type of the image'
     },
     ocrText: {
       type: DataTypes.TEXT,
@@ -42,7 +57,7 @@ module.exports = (sequelize, DataTypes) => {
       comment: 'When the data was submitted'
     }
   }, {
-    tableName: 'printing_data',
+    tableName: 'batch_code_data',
     timestamps: true, // Adds createdAt and updatedAt
     indexes: [
       {
@@ -57,5 +72,5 @@ module.exports = (sequelize, DataTypes) => {
     ]
   });
 
-  return PrintingData;
+  return BatchCodeData;
 };

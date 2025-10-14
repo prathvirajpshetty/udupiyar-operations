@@ -58,10 +58,12 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/production', require('./routes/production'));
 app.use('/api/sales', require('./routes/sales'));
-app.use('/api/printing', require('./routes/printing'));
+app.use('/api/batch-code-print', require('./routes/batchCodePrint'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/batch-code-data', require('./routes/batchCodeData'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -85,7 +87,7 @@ const startServer = async () => {
     console.log('✅ Database connection established successfully.');
     
     // Sync database (creates tables if they don't exist)
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: false });
     console.log('✅ Database synchronized.');
     
     // Start server

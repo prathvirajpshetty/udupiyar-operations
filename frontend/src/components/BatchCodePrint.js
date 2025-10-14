@@ -5,7 +5,7 @@ import { s3UploadService } from '../services/s3UploadService';
 import DataStorage from '../utils/DataStorage';
 import '../Page.css';
 
-function Printing() {
+function BatchCodePrint() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -22,8 +22,8 @@ function Printing() {
   });
   const [isCalculated, setIsCalculated] = useState(false);
   const [dateInfo, setDateInfo] = useState({});
-  const [uploadedPrintingImage, setUploadedPrintingImage] = useState(null);
-  const [printingImageFileName, setPrintingImageFileName] = useState('');
+  const [uploadedBatchCodeImage, setUploadedBatchCodeImage] = useState(null);
+  const [batchCodeImageFileName, setBatchCodeImageFileName] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [showUploadActions, setShowUploadActions] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -33,11 +33,11 @@ function Printing() {
   useEffect(() => {
     return () => {
       // Cleanup any ongoing processes when component unmounts
-      if (uploadedPrintingImage) {
-        URL.revokeObjectURL(uploadedPrintingImage);
+      if (uploadedBatchCodeImage) {
+        URL.revokeObjectURL(uploadedBatchCodeImage);
       }
     };
-  }, [uploadedPrintingImage]);
+  }, [uploadedBatchCodeImage]);
 
   // Ensure date is always current on component mount
   useEffect(() => {
@@ -177,7 +177,7 @@ function Printing() {
       fileInputRef.current.value = '';
     }
     
-    // Trigger file input click to upload printing image
+    // Trigger file input click to upload batch code image
     fileInputRef.current.click();
   };
 
@@ -200,15 +200,15 @@ function Printing() {
       return;
     }
 
-    // Clean up previous printing image if exists
-    if (uploadedPrintingImage) {
-      URL.revokeObjectURL(uploadedPrintingImage);
+    // Clean up previous batch code image if exists
+    if (uploadedBatchCodeImage) {
+      URL.revokeObjectURL(uploadedBatchCodeImage);
     }
 
     // Store the file and show preview with submit/cancel buttons
     setSelectedFile(file);
-    setUploadedPrintingImage(URL.createObjectURL(file));
-    setPrintingImageFileName(file.name);
+    setUploadedBatchCodeImage(URL.createObjectURL(file));
+    setBatchCodeImageFileName(file.name);
     setShowUploadActions(true);
   };
 
@@ -217,33 +217,33 @@ function Printing() {
 
     setIsUploading(true);
     try {
-      // First save the printing data to backend
-      const printingData = {
+      // First save the batch code print data to backend
+      const batchCodePrintData = {
         selectedDate,
         calculatedDates: dateInfo,
         user: currentUser?.username || 'anonymous',
         timestamp: new Date().toISOString()
       };
 
-      // Save printing data first
-      const printingResult = await DataStorage.saveData('printing', printingData);
-      console.log('Printing data saved:', printingResult);
+      // Save batch code print data first
+      const batchCodePrintResult = await DataStorage.saveData('batch-code-print', batchCodePrintData);
 
-      // Upload image to S3 with reference to printing data
-      const uploadResult = await s3UploadService.uploadPrintingImage(selectedFile, {
-        printingDataId: printingResult.id,
-        description: `Printing image for ${selectedDate}`,
+      // Upload image to S3 with batch code data
+      const uploadResult = await s3UploadService.uploadBatchCodeImage(selectedFile, {
+        batchCodeDataId: batchCodePrintResult.id,
+        selectedDate: selectedDate,
+        calculatedDates: dateInfo,
+        description: `Batch code image for ${selectedDate}`,
         uploadedBy: currentUser?.username || 'anonymous'
       });
 
-      alert('Printing data and image uploaded successfully!');
-      console.log('Upload successful:', uploadResult);
+      alert('Batch code print data and batch code image uploaded successfully!');
       
       // Reset upload state
       setShowUploadActions(false);
       setSelectedFile(null);
-      setUploadedPrintingImage(null);
-      setPrintingImageFileName('');
+      setUploadedBatchCodeImage(null);
+      setBatchCodeImageFileName('');
       
     } catch (error) {
       console.error('Error uploading:', error);
@@ -255,11 +255,11 @@ function Printing() {
 
   const handleCancelUpload = () => {
     // Clean up and reset
-    if (uploadedPrintingImage) {
-      URL.revokeObjectURL(uploadedPrintingImage);
+    if (uploadedBatchCodeImage) {
+      URL.revokeObjectURL(uploadedBatchCodeImage);
     }
-    setUploadedPrintingImage(null);
-    setPrintingImageFileName('');
+    setUploadedBatchCodeImage(null);
+    setBatchCodeImageFileName('');
     setSelectedFile(null);
     setShowUploadActions(false);
     
@@ -276,7 +276,7 @@ function Printing() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>Printing</h1>
+        <h1>Batch Code Print</h1>
       </div>
       
       {!isCalculated ? (
@@ -320,14 +320,14 @@ function Printing() {
             </div>
           </div>
 
-          <div className="upload-printing-image-section">
+          <div className="upload-batch-code-image-section">
             {!showUploadActions ? (
               <button 
                 className="upload-button" 
                 onClick={handleUploadProof}
                 style={{ padding: '20px', margin: '20px' }}
               >
-                UPLOAD PRINTING IMAGE
+                UPLOAD BATCH CODE IMAGE
               </button>
             ) : (
               <div className="upload-actions">
@@ -340,12 +340,12 @@ function Printing() {
                     border: '1px solid #4caf50',
                     margin: '10px 0',
                     fontWeight: 'bold'
-                  }}>📎 Selected: {printingImageFileName}</p>
-                  {uploadedPrintingImage && (
-                    <div className="printing-image-preview">
+                  }}>📎 Selected: {batchCodeImageFileName}</p>
+                  {uploadedBatchCodeImage && (
+                    <div className="batch-code-image-preview">
                       <img 
-                        src={uploadedPrintingImage} 
-                        alt="Printing image preview" 
+                        src={uploadedBatchCodeImage} 
+                        alt="Batch code image preview" 
                         style={{ 
                           maxWidth: '200px', 
                           maxHeight: '200px', 
@@ -435,4 +435,4 @@ function Printing() {
   );
 }
 
-export default Printing;
+export default BatchCodePrint;
