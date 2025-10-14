@@ -1,9 +1,9 @@
 const express = require('express');
-const { PrintingData } = require('../models');
+const { BatchCodeData } = require('../models');
 const { Op } = require('sequelize');
 const router = express.Router();
 
-// GET /api/printing - Get all printing data
+// GET /api/batch-code-print - Get all batch code print data
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, startDate, endDate, user } = req.query;
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 
     const offset = (page - 1) * limit;
     
-    const { count, rows } = await PrintingData.findAndCountAll({
+    const { count, rows } = await BatchCodeData.findAndCountAll({
       where,
       limit: parseInt(limit),
       offset: parseInt(offset),
@@ -33,16 +33,16 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching printing data:', error);
+    console.error('Error fetching batch code print data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch printing data',
+      error: 'Failed to fetch batch code print data',
       message: error.message
     });
   }
 });
 
-// POST /api/printing - Create new printing data
+// POST /api/batch-code-print - Create new batch code print data
 router.post('/', async (req, res) => {
   try {
     const { selectedDate, calculatedDates, imageUrl, imagePath, ocrText, user } = req.body;
@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const printingData = await PrintingData.create({
+    const batchCodeData = await BatchCodeData.create({
       selectedDate,
       calculatedDates: calculatedDates || null,
       imageUrl: imageUrl || null,
@@ -68,111 +68,111 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: printingData,
-      message: 'Printing data created successfully'
+      data: batchCodeData,
+      message: 'Batch code data created successfully'
     });
   } catch (error) {
-    console.error('Error creating printing data:', error);
+    console.error('Error creating batch code print data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create printing data',
+      error: 'Failed to create batch code print data',
       message: error.message
     });
   }
 });
 
-// GET /api/printing/:id - Get specific printing data
+// GET /api/batch-code-print/:id - Get specific batch code print data
 router.get('/:id', async (req, res) => {
   try {
-    const printingData = await PrintingData.findByPk(req.params.id);
-    
-    if (!printingData) {
+    const batchCodeData = await BatchCodeData.findByPk(req.params.id);
+
+    if (!batchCodeData) {
       return res.status(404).json({
         success: false,
-        error: 'Printing data not found'
+        message: 'Batch code data not found'
       });
     }
 
     res.json({
       success: true,
-      data: printingData
+      data: batchCodeData
     });
   } catch (error) {
-    console.error('Error fetching printing data:', error);
+    console.error('Error fetching batch code print data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch printing data',
+      error: 'Failed to fetch batch code print data',
       message: error.message
     });
   }
 });
 
-// PUT /api/printing/:id - Update printing data
+// PUT /api/batch-code-print/:id - Update batch code print data
 router.put('/:id', async (req, res) => {
   try {
     const { selectedDate, calculatedDates, imageUrl, imagePath, ocrText } = req.body;
     
-    const printingData = await PrintingData.findByPk(req.params.id);
+    const batchCodeData = await BatchCodeData.findByPk(req.params.id);
     
-    if (!printingData) {
+    if (!batchCodeData) {
       return res.status(404).json({
         success: false,
-        error: 'Printing data not found'
+        error: 'Batch code data not found'
       });
     }
 
-    await printingData.update({
-      selectedDate: selectedDate || printingData.selectedDate,
-      calculatedDates: calculatedDates !== undefined ? calculatedDates : printingData.calculatedDates,
-      imageUrl: imageUrl !== undefined ? imageUrl : printingData.imageUrl,
-      imagePath: imagePath !== undefined ? imagePath : printingData.imagePath,
-      ocrText: ocrText !== undefined ? ocrText : printingData.ocrText
+    await batchCodeData.update({
+      selectedDate: selectedDate || batchCodeData.selectedDate,
+      calculatedDates: calculatedDates !== undefined ? calculatedDates : batchCodeData.calculatedDates,
+      imageUrl: imageUrl !== undefined ? imageUrl : batchCodeData.imageUrl,
+      imagePath: imagePath !== undefined ? imagePath : batchCodeData.imagePath,
+      ocrText: ocrText !== undefined ? ocrText : batchCodeData.ocrText
     });
 
     res.json({
       success: true,
-      data: printingData,
-      message: 'Printing data updated successfully'
+      data: batchCodeData,
+      message: 'Batch code data updated successfully'
     });
   } catch (error) {
-    console.error('Error updating printing data:', error);
+    console.error('Error updating batch code print data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update printing data',
+      error: 'Failed to update batch code print data',
       message: error.message
     });
   }
 });
 
-// DELETE /api/printing/:id - Delete printing data
+// DELETE /api/batch-code-print/:id - Delete batch code data
 router.delete('/:id', async (req, res) => {
   try {
-    const printingData = await PrintingData.findByPk(req.params.id);
+    const batchCodeData = await BatchCodeData.findByPk(req.params.id);
     
-    if (!printingData) {
+    if (!batchCodeData) {
       return res.status(404).json({
         success: false,
-        error: 'Printing data not found'
+        error: 'Batch code data not found'
       });
     }
 
-    await printingData.destroy();
+    await batchCodeData.destroy();
 
     res.json({
       success: true,
-      message: 'Printing data deleted successfully'
+      message: 'Batch code data deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting printing data:', error);
+    console.error('Error deleting batch code print data:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete printing data',
+      error: 'Failed to delete batch code print data',
       message: error.message
     });
   }
 });
 
-// POST /api/printing/calculate-dates - Calculate printing dates
+// POST /api/batch-code-print/calculate-dates - Calculate batch code print dates
 router.post('/calculate-dates', (req, res) => {
   try {
     const { selectedDate } = req.body;

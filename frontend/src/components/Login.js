@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { credentials } from '../credentials/credentials';
 import '../Page.css';
 
 function Login() {
@@ -28,25 +27,36 @@ function Login() {
     setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      
+      // Call backend authentication API
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        })
+      });
 
-      // Check credentials
-      const user = credentials.find(
-        cred => cred.username === formData.username && cred.password === formData.password
-      );
+      const result = await response.json();
 
-      if (user) {
+      if (result.success) {
         // Successful login
         login({
-          username: user.username,
+          username: result.user.username,
+          role: result.user.role,
+          id: result.user.id,
           loginTime: new Date().toISOString()
         });
       } else {
-        setError('Invalid username or password');
+        setError(result.message || 'Invalid username or password');
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      console.error('Login error:', err);
+      setError('Login failed. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

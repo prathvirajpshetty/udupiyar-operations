@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { upload, uploadToS3, s3, compressImage } = require('../config/s3');
-const { PrintingData } = require('../models');
+const { upload, uploadToS3, s3 } = require('../config/s3');
+const { BatchCodeData } = require('../models');
 
-// Upload printing image to S3
-router.post('/printing-image', upload.single('image'), async (req, res) => {
+// Upload batch code image to S3
+router.post('/batch-code-image', upload.single('image'), async (req, res) => {
   try {
-    console.log('Received upload request-------');
     if (!req.file) {
       return res.status(400).json({ 
         success: false, 
@@ -14,52 +13,65 @@ router.post('/printing-image', upload.single('image'), async (req, res) => {
       });
     }
 
-    console.log('Upload request received:', {
-      filename: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      sizeKB: (req.file.size / 1024).toFixed(2) + ' KB'
-    });
+    console.log('Upload request:', req.file.originalname, (req.file.size / 1024).toFixed(2) + 'KB');
 
     // Extract additional data from request body
     const {
-      printingDataId,
+      batchCodeDataId,
+      selectedDate,
+      calculatedDates,
       description,
       uploadedBy
     } = req.body;
-
-    // Log the metadata being sent to S3
-    console.log('Metadata for S3 upload:', {
-      description,
-      uploadedBy,
-      printingDataId: printingDataId || 'not provided'
-    });
 
     // Upload to S3 using our custom function
     const s3Result = await uploadToS3(req.file, {
       description,
       uploadedBy,
-      printingDataId
+      selectedDate
     });
 
-    console.log('S3 upload successful:', s3Result);
+    console.log('S3 upload successful:', s3Result.key);
 
-    // Update printing data record with image URL if printingDataId is provided
-    if (printingDataId) {
-      const printingRecord = await PrintingData.findByPk(printingDataId);
-      if (printingRecord) {
-        await printingRecord.update({
+    // Create or update batch code data record with image information
+    let batchCodeRecord;
+    
+    if (batchCodeDataId) {
+      // Update existing record
+      batchCodeRecord = await BatchCodeData.findByPk(batchCodeDataId);
+      if (batchCodeRecord) {
+        await batchCodeRecord.update({
           imageUrl: s3Result.location,
-          imageName: s3Result.key
+          imageName: s3Result.key,
+          originalFileName: req.file.originalname,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype
         });
-        console.log('Updated printing data record:', printingDataId);
+        console.log('Updated existing batch code data record with image');
       }
+    } else {
+      // Create new record with image and batch code data
+      batchCodeRecord = await BatchCodeData.create({
+        selectedDate: selectedDate || new Date().toISOString().split('T')[0],
+        calculatedDates: calculatedDates ? JSON.parse(calculatedDates) : null,
+        imageUrl: s3Result.location,
+        imageName: s3Result.key,
+        originalFileName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        ocrText: null, // Can be filled later with OCR
+        user: uploadedBy || 'anonymous',
+        timestamp: new Date()
+      });
+      console.log('Created new batch code data record with image:', batchCodeRecord.id);
     }
 
     res.json({
       success: true,
-      message: 'Image uploaded successfully to S3',
+      message: 'Batch code image uploaded successfully to S3 and saved to database',
       data: {
+        batchCodeDataId: batchCodeRecord.id,
+        selectedDate: batchCodeRecord.selectedDate,
         imageUrl: s3Result.location,
         fileName: s3Result.key,
         originalName: req.file.originalname,
@@ -69,7 +81,6 @@ router.post('/printing-image', upload.single('image'), async (req, res) => {
         compressedSizeKB: s3Result.compressedSizeKB,
         compressionRatio: s3Result.compressionRatio,
         uploadedAt: new Date().toISOString(),
-        printingDataId: printingDataId || null,
         folder: s3Result.folder
       }
     });
@@ -98,14 +109,13 @@ router.post('/printing-image', upload.single('image'), async (req, res) => {
 });
 
 // Get signed URL for viewing protected images
-router.get('/printing-image/:fileName', async (req, res) => {
+router.get('/batch-code-image/:fileName', async (req, res) => {
   try {
     const fileName = req.params.fileName;
-    console.log('Generating signed URL for:', fileName);
     
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileName.startsWith('printing-images/') ? fileName : `printing-images/${fileName}`,
+      Key: fileName.startsWith('batch-code-images/') ? fileName : `batch-code-images/${fileName}`,
       Expires: 3600 // 1 hour
     };
 
@@ -127,14 +137,13 @@ router.get('/printing-image/:fileName', async (req, res) => {
 });
 
 // Delete image from S3
-router.delete('/printing-image/:fileName', async (req, res) => {
+router.delete('/batch-code-image/:fileName', async (req, res) => {
   try {
     const fileName = req.params.fileName;
-    console.log('Deleting S3 object:', fileName);
     
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
-      Key: fileName.startsWith('printing-images/') ? fileName : `printing-images/${fileName}`
+      Key: fileName.startsWith('batch-code-images/') ? fileName : `batch-code-images/${fileName}`
     };
 
     await s3.deleteObject(params).promise();
@@ -154,42 +163,74 @@ router.delete('/printing-image/:fileName', async (req, res) => {
   }
 });
 
-// Test compression endpoint (for development)
-router.post('/test-compression', upload.single('image'), async (req, res) => {
+// Get batch code data with images (now all in one table)
+router.get('/batch-code-data', async (req, res) => {
   try {
-    console.log('Testing image compression...');
+    const { selectedDate, user, limit = 50, offset = 0 } = req.query;
     
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No image file provided' 
-      });
+    const whereClause = {};
+    
+    // Add filters if provided
+    if (selectedDate) {
+      whereClause.selectedDate = selectedDate;
+    }
+    
+    if (user) {
+      whereClause.user = user;
     }
 
-    const originalSizeKB = req.file.size / 1024;
-    console.log('Original image size:', originalSizeKB.toFixed(2), 'KB');
+    const batchCodeData = await BatchCodeData.findAndCountAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
 
-    const compressedBuffer = await compressImage(req.file.buffer, 100);
-    const compressedSizeKB = compressedBuffer.length / 1024;
-    
     res.json({
       success: true,
-      message: 'Image compression test completed',
       data: {
-        originalSize: req.file.size,
-        originalSizeKB: originalSizeKB.toFixed(2) + ' KB',
-        compressedSize: compressedBuffer.length,
-        compressedSizeKB: compressedSizeKB.toFixed(2) + ' KB',
-        compressionRatio: (originalSizeKB / compressedSizeKB).toFixed(2) + 'x',
-        savingsPercent: (((originalSizeKB - compressedSizeKB) / originalSizeKB) * 100).toFixed(1) + '%'
+        records: batchCodeData.rows,
+        totalCount: batchCodeData.count,
+        currentPage: Math.floor(offset / limit) + 1,
+        totalPages: Math.ceil(batchCodeData.count / limit),
+        hasMore: (offset + limit) < batchCodeData.count
       }
     });
 
   } catch (error) {
-    console.error('Compression test error:', error);
+    console.error('Get batch code data error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to compress image',
+      message: 'Failed to retrieve batch code data',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Get batch code data by ID
+router.get('/batch-code-data/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const batchCodeData = await BatchCodeData.findByPk(id);
+
+    if (!batchCodeData) {
+      return res.status(404).json({
+        success: false,
+        message: 'Batch code data not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: batchCodeData
+    });
+
+  } catch (error) {
+    console.error('Get batch code data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve batch code data',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

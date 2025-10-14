@@ -54,7 +54,10 @@ const compressImage = async (buffer, targetSizeKB = 100) => {
         })
         .toBuffer();
 
-      console.log(`Attempt ${attempts + 1}: Quality ${quality}, Size: ${(compressed.length / 1024).toFixed(2)} KB`);
+      // Log only if compression takes multiple attempts
+      if (attempts > 2) {
+        console.log(`Compression attempt ${attempts + 1}: ${quality}% quality, ${(compressed.length / 1024).toFixed(1)}KB`);
+      }
 
       if (compressed.length <= targetBytes) {
         break;
@@ -106,7 +109,7 @@ const uploadToS3 = async (file, metadata = {}) => {
     
     const fileExtension = file.originalname.split('.').pop() || 'jpg';
     const uuid = uuidv4().substring(0, 8); // Short UUID for uniqueness
-    const fileName = `printing-images/${monthYear}/${day}-${month}-${year}_${uuid}.${fileExtension}`;
+    const fileName = `batch-code-images/${monthYear}/${day}-${month}-${year}_${uuid}.${fileExtension}`;
 
     console.log('Processing image upload:', file.originalname);
     
@@ -141,8 +144,6 @@ const uploadToS3 = async (file, metadata = {}) => {
       printingdataid: metadata.printingDataId
     });
 
-    console.log('Sanitized S3 metadata:', s3Metadata);
-
     const uploadParams = {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: fileName,
@@ -152,13 +153,6 @@ const uploadToS3 = async (file, metadata = {}) => {
       CacheControl: 'max-age=31536000', // Cache for 1 year
       ACL: 'private' // Keep images private
     };
-
-    console.log('S3 upload params:', {
-      Bucket: uploadParams.Bucket,
-      Key: uploadParams.Key,
-      ContentType: uploadParams.ContentType,
-      MetadataKeys: Object.keys(s3Metadata)
-    });
 
     const result = await s3.upload(uploadParams).promise();
     

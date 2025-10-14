@@ -1,4 +1,4 @@
-// S3 Upload Service for Printing Images
+// S3 Upload Service for Batch Code Images
 // Backend integration for S3 file upload functionality
 
 class S3UploadService {
@@ -7,10 +7,10 @@ class S3UploadService {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
     
     // S3 upload endpoint
-    this.uploadEndpoint = `${this.baseURL}/api/upload/printing-image`;
+    this.uploadEndpoint = `${this.baseURL}/api/upload/batch-code-image`;
   }
 
-  async uploadPrintingImage(file, metadata = {}) {
+  async uploadBatchCodeImage(file, metadata = {}) {
     if (!file) {
       throw new Error('No file provided');
     }
@@ -30,15 +30,29 @@ class S3UploadService {
     const formData = new FormData();
     formData.append('image', file);
     
-    // Add metadata if provided
-    if (metadata.printingDataId) {
-      formData.append('printingDataId', metadata.printingDataId);
+    // Add all batch code data metadata
+    if (metadata.batchCodeDataId) {
+      formData.append('batchCodeDataId', metadata.batchCodeDataId);
     }
+    
+    if (metadata.selectedDate) {
+      formData.append('selectedDate', metadata.selectedDate);
+    }
+    
+    if (metadata.calculatedDates) {
+      formData.append('calculatedDates', JSON.stringify(metadata.calculatedDates));
+    }
+    
     if (metadata.description) {
       formData.append('description', metadata.description);
     }
+    
     if (metadata.uploadedBy) {
       formData.append('uploadedBy', metadata.uploadedBy);
+    }
+
+    if (metadata.user) {
+      formData.append('user', metadata.user);
     }
 
     try {
@@ -72,46 +86,37 @@ class S3UploadService {
     }
   }
 
-  async getSignedUrl(fileName) {
+  // Additional service methods for batch code data management
+  async getBatchCodeData(date) {
     try {
-      const response = await fetch(`${this.baseURL}/api/upload/printing-image/${fileName}`);
+      const response = await fetch(`${this.baseURL}/api/batch-code-data?date=${date}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to get signed URL: ${response.status}`);
+        throw new Error(`Failed to get batch code data: ${response.status}`);
       }
 
       const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to get signed URL');
-      }
-
-      return result.signedUrl;
+      return result;
     } catch (error) {
-      console.error('Get Signed URL Error:', error);
+      console.error('Get Batch Code Data Error:', error);
       throw error;
     }
   }
 
-  async deleteImage(fileName) {
+  async deleteBatchCodeData(id) {
     try {
-      const response = await fetch(`${this.baseURL}/api/upload/printing-image/${fileName}`, {
+      const response = await fetch(`${this.baseURL}/api/batch-code-data/${id}`, {
         method: 'DELETE'
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to delete image: ${response.status}`);
+        throw new Error(`Failed to delete batch code data: ${response.status}`);
       }
 
       const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to delete image');
-      }
-
       return result;
     } catch (error) {
-      console.error('Delete Image Error:', error);
+      console.error('Delete Batch Code Data Error:', error);
       throw error;
     }
   }
