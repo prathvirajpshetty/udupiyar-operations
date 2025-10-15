@@ -11,7 +11,12 @@
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:seed": "npx sequelize-cli db:seed:all",
     "db:seed:undo": "npx sequelize-cli db:seed:undo:all",
-    "db:reset": "npm run db:migrate:undo && npm run db:migrate && npm run db:seed"
+    "db:reset": "npm run db:migrate:undo && npm run db:migrate && npm run db:seed",
+    "db:dev:migrate": "NODE_ENV=development npx sequelize-cli db:migrate",
+    "db:dev:seed": "NODE_ENV=development npx sequelize-cli db:seed:all",
+    "db:dev:reset": "NODE_ENV=development npm run db:migrate:undo && NODE_ENV=development npm run db:migrate && NODE_ENV=development npm run db:seed",
+    "db:prod:migrate": "NODE_ENV=production npx sequelize-cli db:migrate",
+    "db:prod:seed": "NODE_ENV=production npx sequelize-cli db:seed:all"
   },
   "keywords": [
     "udupiyar",

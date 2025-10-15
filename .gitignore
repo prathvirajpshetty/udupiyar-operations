@@ -19,8 +19,15 @@ build
 .env.development.local
 .env.test.local
 .env.production.local
+.env.prod
 backend/.env
 backend/.env.local
+backend/.env.prod
+backend/.env.production
+*/.env
+*/.env.local
+*/.env.prod
+*/.env.production
 
 # Editor directories and files
 .vscode/*
