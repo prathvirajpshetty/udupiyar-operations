@@ -14,28 +14,11 @@ const PORT = process.env.PORT || 4000;
 // Middleware
 app.use(helmet()); // Security headers
 
-// Enhanced CORS configuration for mobile and ngrok
+// CORS configuration - Allow all origins for development/testing
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests from ngrok, localhost, and mobile apps
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:19006',
-      'https://unsplendourous-colleen-hardier.ngrok-free.dev',
-      /\.ngrok-free\.dev$/,
-      /\.ngrok\.io$/,
-      /exp:\/\/.+/
-    ];
-    
-    if (!origin || allowedOrigins.some(allowed => 
-      typeof allowed === 'string' ? allowed === origin : allowed.test(origin)
-    )) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(null, true); // Still allow for development
-    }
-  },
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
