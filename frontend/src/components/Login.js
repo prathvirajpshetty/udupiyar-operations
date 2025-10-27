@@ -27,36 +27,33 @@ function Login() {
     setError('');
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
-      
-      // Call backend authentication API
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
-      });
+      // Frontend-only authentication with hardcoded credentials
+      const validCredentials = [
+        { username: 'admin', password: 'admin123', role: 'admin' },
+        { username: 'raghu', password: '5password3', role: 'manager' },
+        { username: 'prakash', password: '1password4', role: 'employee' }
+      ];
 
-      const result = await response.json();
+      // Find matching credentials
+      const user = validCredentials.find(
+        cred => cred.username.toLowerCase() === formData.username.toLowerCase() && 
+                cred.password === formData.password
+      );
 
-      if (result.success) {
-        // Successful login
+      if (user) {
+        // Successful login - save credentials locally
         login({
-          username: result.user.username,
-          role: result.user.role,
-          id: result.user.id,
+          username: user.username,
+          role: user.role,
+          id: `user_${user.username}_${Date.now()}`, // Generate a unique ID
           loginTime: new Date().toISOString()
         });
       } else {
-        setError(result.message || 'Invalid username or password');
+        setError('Invalid username or password');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please check your connection and try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
