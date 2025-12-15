@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../Page.css';
+import './Page.css';
 
 function RawMaterial() {
   const navigate = useNavigate();
@@ -17,25 +17,23 @@ function RawMaterial() {
 
     const halfInput = inputValue / 2;
     
-    const dosaRice = halfInput * 0.674;
-    const idlyRice = halfInput * 0.076;
-    const uradDal = halfInput * 0.250;
-    const fenugreek = halfInput * 0.003;
+    const dosaRice = halfInput * 0.719;
+    const idlyRice = halfInput * 0.081;
+    const uradDalDH = halfInput * 0.200;
+    const uradDalMR = halfInput * 0.200;
+    const fenugreek = halfInput * 0.002;
     
     // SALT calculation: (ADD all the value * 1.5) * 0.0085
-    const totalBeforeSalt = dosaRice + idlyRice + uradDal + fenugreek;
-    const salt = (totalBeforeSalt * 1.5) * 0.0085;
-    
-    // Calculate total weight
-    const totalWeight = (dosaRice + idlyRice + uradDal + fenugreek + salt) * 2;
+    const totalBeforeSalt = dosaRice + idlyRice + uradDalDH + uradDalMR + fenugreek;
+    const salt = (totalBeforeSalt * 1.5) * 0.01;
 
     setResults({
       dosaRice: dosaRice.toFixed(3),
       idlyRice: idlyRice.toFixed(3),
-      uradDal: uradDal.toFixed(3),
+      uradDalDH: uradDalDH.toFixed(3),
+      uradDalMR: uradDalMR.toFixed(3),
       fenugreek: fenugreek.toFixed(3),
-      salt: salt.toFixed(3),
-      totalWeight: totalWeight.toFixed(3)
+      salt: salt.toFixed(3)
     });
 
     setIsCalculated(true);
@@ -64,14 +62,9 @@ function RawMaterial() {
               className="weight-input"
             />
           </div>
-          <div className="button-group">
-            <button className="calculate-button" onClick={calculateWeights}>
-              Calculate
-            </button>
-            <button className="back-button" onClick={goBack}>
-              Back
-            </button>
-          </div>
+          <button className="calculate-button" onClick={calculateWeights}>
+            Calculate
+          </button>
         </div>
       ) : (
         <div className="results-section">
@@ -85,8 +78,12 @@ function RawMaterial() {
               <span className="item-weight">{results.idlyRice} kg</span>
             </div>
             <div className="result-item">
-              <span className="item-name">URAD DAL</span>
-              <span className="item-weight">{results.uradDal} kg</span>
+              <span className="item-name">URAD DAL DOUBLE GHODA</span>
+              <span className="item-weight">{results.uradDalDH} kg</span>
+            </div>
+            <div className="result-item">
+              <span className="item-name">URAD DAL MAHARAJA</span>
+              <span className="item-weight">{results.uradDalMR} kg</span>
             </div>
             <div className="result-item">
               <span className="item-name">FENUGREEK</span>
@@ -95,10 +92,6 @@ function RawMaterial() {
             <div className="result-item">
               <span className="item-name">SALT</span>
               <span className="item-weight">{results.salt} kg</span>
-            </div>
-            <div className="result-item">
-              <span className="item-name">TOTAL WEIGHT</span>
-              <span className="item-weight">{results.totalWeight} kg</span>
             </div>
           </div>
           
