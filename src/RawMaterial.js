@@ -19,8 +19,8 @@ function RawMaterial() {
     
     const dosaRice = halfInput * 0.719;
     const idlyRice = halfInput * 0.081;
-    const uradDalDH = halfInput * 0.200;
-    const uradDalMR = halfInput * 0.200;
+    const uradDalDH = halfInput * 0.100;
+    const uradDalMR = halfInput * 0.100;
     const fenugreek = halfInput * 0.002;
     
     // SALT calculation: (ADD all the value * 1.5) * 0.0085
